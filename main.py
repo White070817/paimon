@@ -455,6 +455,20 @@ class Pet(QLabel):
             self.y()+offset
         )
 
+        def update_speech_position(self):
+
+        try:
+
+            if self.speech.isVisible():
+
+                self.speech.move(
+                    self.x(),
+                    self.y() - 80
+                )
+
+        except:
+
+            pass
     # ======================
     # 鼠标互动
     # ======================
