@@ -4,6 +4,7 @@ import json
 import random
 
 from PySide6.QtWidgets import QApplication, QLabel, QMenu
+from animation import Animation
 from PySide6.QtGui import QPixmap, QAction
 from PySide6.QtCore import Qt, QTimer, QPoint
 
@@ -54,6 +55,12 @@ class Pet(QLabel):
 
         self.load_image()
 
+        self.animation = Animation(self)
+
+        self.start_idle()
+
+        self.animation = Animation(self)
+
 
         self.dx = self.speed
         self.dy = 2
@@ -69,6 +76,8 @@ class Pet(QLabel):
         )
 
         self.timer.start(30)
+
+        self.start_idle()
 
 
 
@@ -139,6 +148,18 @@ class Pet(QLabel):
             pix.size()
         )
 
+    def start_idle(self):
+
+    folder = os.path.join(
+        BASE,
+        "assets",
+        "animations",
+        "idle"
+    )
+
+    self.animation.load_frames(folder)
+
+    self.animation.start(5)
 
 
     def move_pet(self):
