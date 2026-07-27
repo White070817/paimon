@@ -8,27 +8,39 @@ on:
 
 jobs:
   build:
+
     runs-on: windows-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+    - name: Checkout
+      uses: actions/checkout@v4
 
-      - name: Install
-        run: |
-          pip install PySide6 pyinstaller
 
-      - name: Build EXE
-        run: |
-          pyinstaller --name PaimonDesktopPet --onefile --windowed --add-data "pet.png;." main.py
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
 
-      - name: Upload
-        uses: actions/upload-artifact@v4
-        with:
-          name: PaimonDesktopPet
-          path: dist/PaimonDesktopPet.exe
+
+    - name: Install
+      run: |
+        pip install PySide6 pyinstaller
+
+
+    - name: Build EXE
+      run: |
+        pyinstaller --name PaimonDesktopPet --onefile --windowed main.py
+
+
+    - name: Prepare Files
+      run: |
+        mkdir dist\assets
+        copy pet.png dist\assets\pet.png
+
+
+    - name: Upload
+      uses: actions/upload-artifact@v4
+      with:
+        name: PaimonDesktopPet
+        path: dist
