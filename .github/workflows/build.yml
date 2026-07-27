@@ -7,6 +7,7 @@ on:
       - main
 
 jobs:
+
   build:
 
     runs-on: windows-latest
@@ -23,9 +24,9 @@ jobs:
         python-version: "3.11"
 
 
-    - name: Install
+    - name: Install requirements
       run: |
-        pip install PySide6 pyinstaller
+        pip install -r requirements.txt
 
 
     - name: Build EXE
@@ -33,14 +34,20 @@ jobs:
         pyinstaller --name PaimonDesktopPet --onefile --windowed main.py
 
 
-    - name: Prepare Files
+    - name: Prepare Assets
       run: |
         mkdir dist\assets
-        copy pet.png dist\assets\pet.png
+        copy assets\pet.png dist\assets\pet.png
+        xcopy assets\animations dist\assets\animations /E /I
 
 
-    - name: Upload
+    - name: Package
+      run: |
+        Compress-Archive -Path dist\* -DestinationPath PaimonDesktopPet.zip
+
+
+    - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: PaimonDesktopPet
-        path: dist
+        path: PaimonDesktopPet.zip
