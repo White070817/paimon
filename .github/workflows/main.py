@@ -72,26 +72,26 @@ class DesktopPet(QLabel):
         elif e.button() == Qt.RightButton:
             menu = QMenu()
 
-            stop = QAction("停止", self)
-            start = QAction("继续", self)
-            quit = QAction("退出", self)
+                        stop_action = QAction("停止", self)
+            start_action = QAction("继续", self)
+            quit_action = QAction("退出", self)
 
-            menu.addAction(stop)
-            menu.addAction(start)
+            menu.addAction(stop_action)
+            menu.addAction(start_action)
             menu.addSeparator()
-            menu.addAction(quit)
+            menu.addAction(quit_action)
 
             action = menu.exec(e.globalPosition().toPoint())
 
-            if action == stop:
+            if action == stop_action:
                 self.timer.stop()
 
-            elif action == start:
+            elif action == start_action:
                 self.timer.start(30)
 
-            elif action == quit:
+            elif action == quit_action:
                 QApplication.quit()
-
+                
     def mouseMoveEvent(self, e):
         if self.drag:
             self.move(e.globalPosition().toPoint() - self.offset)
