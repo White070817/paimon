@@ -9,6 +9,7 @@ from PySide6.QtGui import QPixmap, QAction
 from PySide6.QtCore import Qt, QTimer, QPoint
 
 from animation import Animation
+from speech import Speech
 
 
 BASE = os.path.dirname(
@@ -66,19 +67,21 @@ class Pet(QLabel):
         self.load_image()
 
 
-        # 动画系统
+        # 动画
         self.animation = Animation(self)
-
 
         self.start_idle()
 
 
-        # 移动方向
+        # 气泡
+        self.speech = Speech()
+
+
+        # 移动
         self.dx = self.speed
         self.dy = 2
 
 
-        # 移动计时器
         self.timer = QTimer()
 
         self.timer.timeout.connect(
@@ -89,11 +92,14 @@ class Pet(QLabel):
             self.float_pet
         )
 
+        self.timer.timeout.connect(
+            self.update_speech_position
+        )
+
         self.timer.start(30)
 
 
-
-        # 随机眨眼
+        # 眨眼
         self.blink_timer = QTimer()
 
         self.blink_timer.timeout.connect(
@@ -105,6 +111,16 @@ class Pet(QLabel):
         )
 
 
+        # 自动聊天
+        self.talk_timer = QTimer()
+
+        self.talk_timer.timeout.connect(
+            self.random_talk
+        )
+
+        self.talk_timer.start(
+            30000
+        )
 
     # ======================
     # 配置
@@ -174,12 +190,12 @@ class Pet(QLabel):
             return
 
 
-        pix = QPixmap(
+        pix=QPixmap(
             PET_IMAGE
         )
 
 
-        pix = pix.scaled(
+        pix=pix.scaled(
             int(pix.width()*self.scale),
             int(pix.height()*self.scale),
             Qt.KeepAspectRatio,
@@ -234,7 +250,7 @@ class Pet(QLabel):
 
     def random_blink(self):
 
-        if random.random() < 0.4:
+        if random.random()<0.4:
 
             self.play_animation(
                 "blink",
@@ -265,26 +281,49 @@ class Pet(QLabel):
 
 
     # ======================
-    # 移动 + 漂浮
+    # 说话
+    # ======================
+
+    def show_speech(self):
+
+        self.speech.move(
+            self.x(),
+            self.y()-80
+        )
+
+        self.speech.speak()
+
+
+
+    def random_talk(self):
+
+        if random.random()<0.5:
+
+            self.show_speech()
+
+
+
+    # ======================
+    # 移动
     # ======================
 
     def move_pet(self):
 
-        screen = QApplication.primaryScreen().availableGeometry()
+        screen=QApplication.primaryScreen().availableGeometry()
 
 
-        x = self.x()+self.dx
-        y = self.y()+self.dy
+        x=self.x()+self.dx
+        y=self.y()+self.dy
 
 
-        if x <= 0 or x+self.width() >= screen.width():
+        if x<=0 or x+self.width()>=screen.width():
 
-            self.dx *= -1
+            self.dx*=-1
 
 
-        if y <= 0 or y+self.height() >= screen.height():
+        if y<=0 or y+self.height()>=screen.height():
 
-            self.dy *= -1
+            self.dy*=-1
 
 
         self.move(
@@ -296,10 +335,10 @@ class Pet(QLabel):
 
     def float_pet(self):
 
-        self.float_time += 0.08
+        self.float_time+=0.08
 
 
-        offset = int(
+        offset=int(
             math.sin(self.float_time)*2
         )
 
@@ -308,6 +347,17 @@ class Pet(QLabel):
             self.x(),
             self.y()+offset
         )
+
+
+
+    def update_speech_position(self):
+
+        if self.speech.isVisible():
+
+            self.speech.move(
+                self.x(),
+                self.y()-80
+            )
 
 
 
@@ -321,11 +371,13 @@ class Pet(QLabel):
 
             self.happy()
 
+            self.show_speech()
+
 
             self.drag=True
 
 
-            self.offset = (
+            self.offset=(
                 event.globalPosition().toPoint()
                 -
                 self.pos()
@@ -385,6 +437,11 @@ class Pet(QLabel):
             self
         )
 
+        talk=QAction(
+            "让派蒙说话",
+            self
+        )
+
         quit_action=QAction(
             "退出",
             self
@@ -399,9 +456,13 @@ class Pet(QLabel):
         menu.addAction(stop)
         menu.addAction(start)
 
+        menu.addAction(talk)
+
         menu.addSeparator()
 
-        menu.addAction(quit_action)
+        menu.addAction(
+            quit_action
+        )
 
 
         action=menu.exec(
@@ -409,9 +470,10 @@ class Pet(QLabel):
         )
 
 
+
         if action==big:
 
-            self.scale += 0.01
+            self.scale+=0.01
 
             self.save_config()
 
@@ -444,6 +506,12 @@ class Pet(QLabel):
 
 
 
+        elif action==talk:
+
+            self.show_speech()
+
+
+
         elif action==quit_action:
 
             QApplication.quit()
@@ -452,11 +520,15 @@ class Pet(QLabel):
 
 if __name__=="__main__":
 
+
     app=QApplication(sys.argv)
+
 
     pet=Pet()
 
+
     pet.show()
+
 
     sys.exit(
         app.exec()
