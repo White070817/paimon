@@ -14,8 +14,7 @@ from tray import Tray
 
 
 BASE = os.path.dirname(
-    sys.executable if getattr(sys, "frozen", False)
-    else __file__
+    os.path.abspath(__file__)
 )
 
 
@@ -51,8 +50,6 @@ class Pet(QLabel):
         )
 
 
-        # 默认参数
-
         self.scale = 0.075
         self.speed = 3
 
@@ -66,9 +63,7 @@ class Pet(QLabel):
         self.random_move = True
 
 
-
         self.load_config()
-
 
 
         self.drag = False
@@ -77,38 +72,29 @@ class Pet(QLabel):
 
         self.float_time = 0
 
+        self.base_y = 0
 
-        self.wait_time = 0
-
-
-        self.load_image()
-
-
-
-        # 动画
-
-        self.animation = Animation(
-            self
-        )
-
-        self.start_idle()
-
-
-
-        # 气泡
-
-        self.speech = Speech()
-
-
-
-        # 移动方向
 
         self.dx = self.speed
         self.dy = 2
 
 
+        self.load_image()
 
-        # 移动计时器
+
+        self.animation = Animation(
+            self
+        )
+
+
+        self.speech = Speech()
+
+
+        self.start_idle()
+
+
+
+        # 移动
 
         self.timer = QTimer()
 
@@ -129,7 +115,7 @@ class Pet(QLabel):
 
 
 
-        # 自动眨眼
+        # 眨眼
 
         self.blink_timer = QTimer()
 
@@ -151,6 +137,7 @@ class Pet(QLabel):
             self.random_talk
         )
 
+
         self.talk_timer.start(
             self.talk_interval * 1000
         )
@@ -163,13 +150,16 @@ class Pet(QLabel):
             self
         )
 
+
     # ======================
     # 配置
     # ======================
 
+
     def load_config(self):
 
         if not os.path.exists(CONFIG):
+
             return
 
 
@@ -255,9 +245,14 @@ class Pet(QLabel):
     # 图片
     # ======================
 
+
     def load_image(self):
 
         if not os.path.exists(PET_IMAGE):
+
+            self.setText(
+                "Missing assets/pet.png"
+            )
 
             return
 
@@ -268,8 +263,12 @@ class Pet(QLabel):
 
 
         pix=pix.scaled(
-            int(pix.width()*self.scale),
-            int(pix.height()*self.scale),
+            int(
+                pix.width()*self.scale
+            ),
+            int(
+                pix.height()*self.scale
+            ),
             Qt.KeepAspectRatio,
             Qt.SmoothTransformation
         )
@@ -285,16 +284,18 @@ class Pet(QLabel):
         )
 
 
+        self.base_y=self.y()
+
+        self.base_y=self.y()
+
+
 
     # ======================
     # 动画
     # ======================
 
-    def play_animation(
-        self,
-        name,
-        fps=5
-    ):
+
+    def play_animation(self, name, fps=5):
 
         folder=os.path.join(
             BASE,
@@ -302,7 +303,6 @@ class Pet(QLabel):
             "animations",
             name
         )
-
 
         self.animation.play(
             folder,
@@ -322,13 +322,12 @@ class Pet(QLabel):
 
     def random_blink(self):
 
-        if random.random()<0.4:
+        if random.random() < 0.4:
 
             self.play_animation(
                 "blink",
                 8
             )
-
 
             QTimer.singleShot(
                 1500,
@@ -344,7 +343,6 @@ class Pet(QLabel):
             8
         )
 
-
         QTimer.singleShot(
             2000,
             self.start_idle
@@ -355,6 +353,7 @@ class Pet(QLabel):
     # ======================
     # 说话
     # ======================
+
 
     def show_speech(self):
 
@@ -371,33 +370,58 @@ class Pet(QLabel):
 
         if self.auto_talk:
 
-            if random.random()<0.5:
+            if random.random() < 0.5:
 
                 self.show_speech()
 
 
 
+    def update_speech_position(self):
+
+        try:
+
+            if self.speech.isVisible():
+
+                self.speech.move(
+                    self.x(),
+                    self.y()-80
+                )
+
+        except:
+
+            pass
+
+
+
     # ======================
-    # 智能移动
+    # 移动系统
     # ======================
+
 
     def change_direction(self):
 
         if not self.random_move:
+
             return
 
 
-        if random.random()<0.05:
+        if random.random() < 0.05:
 
             self.dx=random.choice(
-                [-self.speed, self.speed]
+                [
+                    -self.speed,
+                    self.speed
+                ]
             )
 
 
-        if random.random()<0.05:
+        if random.random() < 0.05:
 
             self.dy=random.choice(
-                [-2,2]
+                [
+                    -2,
+                    2
+                ]
             )
 
 
@@ -405,6 +429,7 @@ class Pet(QLabel):
     def move_pet(self):
 
         if not self.wander:
+
             return
 
 
@@ -415,20 +440,19 @@ class Pet(QLabel):
         y=self.y()+self.dy
 
 
-        if x<=0 or x+self.width()>=screen.width():
+        if x <= 0 or x+self.width() >= screen.width():
 
-            self.dx*=-1
+            self.dx *= -1
 
 
 
-        if y<=0 or y+self.height()>=screen.height():
+        if y <= 0 or y+self.height() >= screen.height():
 
-            self.dy*=-1
+            self.dy *= -1
 
 
 
         self.change_direction()
-
 
 
         self.move(
@@ -440,11 +464,13 @@ class Pet(QLabel):
 
     def float_pet(self):
 
-        self.float_time+=0.08
+        self.float_time += 0.08
 
 
         offset=int(
-            math.sin(self.float_time)
+            math.sin(
+                self.float_time
+            )
             *
             self.float_strength
         )
@@ -455,50 +481,58 @@ class Pet(QLabel):
             self.y()+offset
         )
 
-        def update_speech_position(self):
+    def float_pet(self):
 
-        try:
+        self.float_time += 0.08
 
-            if self.speech.isVisible():
 
-                self.speech.move(
-                    self.x(),
-                    self.y() - 80
-                )
+        offset = int(
+            math.sin(
+                self.float_time
+            )
+            *
+            self.float_strength
+        )
 
-        except:
 
-            pass
+        self.move(
+            self.x(),
+            self.y()+offset
+        )
+
+
+
     # ======================
     # 鼠标互动
     # ======================
 
-    def mousePressEvent(self,event):
 
-        if event.button()==Qt.LeftButton:
+    def mousePressEvent(self, event):
 
-            self.happy()
+        if event.button() == Qt.LeftButton:
 
-            self.show_speech()
+            self.drag = True
 
-
-            self.drag=True
-
-
-            self.offset=(
+            self.offset = (
                 event.globalPosition().toPoint()
                 -
                 self.pos()
             )
 
 
-        elif event.button()==Qt.RightButton:
+            self.happy()
+
+            self.show_speech()
+
+
+
+        elif event.button() == Qt.RightButton:
 
             self.show_menu(event)
 
 
 
-    def mouseMoveEvent(self,event):
+    def mouseMoveEvent(self, event):
 
         if self.drag:
 
@@ -510,15 +544,16 @@ class Pet(QLabel):
 
 
 
-    def mouseReleaseEvent(self,event):
+    def mouseReleaseEvent(self, event):
 
-        self.drag=False
+        self.drag = False
 
 
 
     # ======================
     # 托盘控制
     # ======================
+
 
     def pause_move(self):
 
@@ -542,30 +577,31 @@ class Pet(QLabel):
     # 右键菜单
     # ======================
 
-    def show_menu(self,event):
 
-        menu=QMenu()
+    def show_menu(self, event):
+
+        menu = QMenu()
 
 
-        talk=QAction(
+        talk = QAction(
             "让派蒙说话",
             self
         )
 
 
-        pause=QAction(
+        pause = QAction(
             "暂停移动",
             self
         )
 
 
-        resume=QAction(
+        resume = QAction(
             "继续移动",
             self
         )
 
 
-        quit_action=QAction(
+        quit_action = QAction(
             "退出",
             self
         )
@@ -574,8 +610,6 @@ class Pet(QLabel):
         menu.addAction(
             talk
         )
-
-        menu.addSeparator()
 
         menu.addAction(
             pause
@@ -592,44 +626,45 @@ class Pet(QLabel):
         )
 
 
-        action=menu.exec(
+        action = menu.exec(
             event.globalPosition().toPoint()
         )
 
 
-        if action==talk:
+        if action == talk:
 
             self.show_speech()
 
 
-
-        elif action==pause:
+        elif action == pause:
 
             self.pause_move()
 
 
-
-        elif action==resume:
+        elif action == resume:
 
             self.resume_move()
 
 
-
-        elif action==quit_action:
+        elif action == quit_action:
 
             self.close_app()
 
 
 
-if __name__=="__main__":
+# ======================
+# 启动
+# ======================
 
 
-    app=QApplication(
+if __name__ == "__main__":
+
+    app = QApplication(
         sys.argv
     )
 
 
-    pet=Pet()
+    pet = Pet()
 
 
     pet.show()
