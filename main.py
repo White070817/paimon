@@ -13,10 +13,14 @@ from speech import Speech
 from tray import Tray
 
 
-BASE = os.path.dirname(
-    os.path.abspath(__file__)
-)
-
+if getattr(sys, "frozen", False):
+    BASE = os.path.dirname(
+        sys.executable
+    )
+else:
+    BASE = os.path.dirname(
+        os.path.abspath(__file__)
+    )
 
 PET_IMAGE = os.path.join(
     BASE,
