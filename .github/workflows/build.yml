@@ -41,13 +41,8 @@ jobs:
         xcopy assets\animations dist\assets\animations /E /I
 
 
-    - name: Package
-      run: |
-        Compress-Archive -Path dist\* -DestinationPath PaimonDesktopPet.zip
-
-
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
         name: PaimonDesktopPet
-        path: PaimonDesktopPet.zip
+        path: dist
