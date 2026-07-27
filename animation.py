@@ -1,4 +1,5 @@
 import os
+
 from PySide6.QtCore import QTimer
 from PySide6.QtGui import QPixmap
 
@@ -10,6 +11,7 @@ class Animation:
         self.label = label
 
         self.frames = []
+
         self.index = 0
 
         self.timer = QTimer()
@@ -19,42 +21,54 @@ class Animation:
         )
 
 
+
     def load_frames(self, folder):
 
         self.frames.clear()
 
         if not os.path.exists(folder):
+
             return
 
 
         files = sorted(
             [
                 f for f in os.listdir(folder)
-                if f.endswith(".png")
+                if f.lower().endswith(".png")
             ]
         )
 
 
-        for f in files:
+        for file in files:
+
+            path = os.path.join(
+                folder,
+                file
+            )
 
             self.frames.append(
-                QPixmap(
-                    os.path.join(folder,f)
-                )
+                QPixmap(path)
             )
 
 
-    def start(self, fps=5):
+
+    def play(self, folder, fps=5):
+
+        self.load_frames(folder)
+
 
         if len(self.frames)==0:
+
             return
 
 
         self.index=0
 
+
         self.timer.start(
             int(1000/fps)
         )
+
 
 
     def stop(self):
@@ -66,6 +80,7 @@ class Animation:
     def next_frame(self):
 
         if len(self.frames)==0:
+
             return
 
 
@@ -74,9 +89,9 @@ class Animation:
         )
 
 
-        self.index+=1
+        self.index += 1
 
 
-        if self.index>=len(self.frames):
+        if self.index >= len(self.frames):
 
-            self.index=0
+            self.index = 0
