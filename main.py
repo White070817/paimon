@@ -10,6 +10,7 @@ from PySide6.QtCore import Qt, QTimer, QPoint
 
 from animation import Animation
 from speech import Speech
+from tray import Tray
 
 
 BASE = os.path.dirname(
@@ -50,11 +51,24 @@ class Pet(QLabel):
         )
 
 
+        # 默认参数
+
         self.scale = 0.075
         self.speed = 3
 
+        self.wander = True
+        self.auto_talk = True
+
+        self.talk_interval = 30
+
+        self.float_strength = 2
+
+        self.random_move = True
+
+
 
         self.load_config()
+
 
 
         self.drag = False
@@ -64,23 +78,37 @@ class Pet(QLabel):
         self.float_time = 0
 
 
+        self.wait_time = 0
+
+
         self.load_image()
 
 
+
         # 动画
-        self.animation = Animation(self)
+
+        self.animation = Animation(
+            self
+        )
 
         self.start_idle()
 
 
+
         # 气泡
+
         self.speech = Speech()
 
 
-        # 移动
+
+        # 移动方向
+
         self.dx = self.speed
         self.dy = 2
 
+
+
+        # 移动计时器
 
         self.timer = QTimer()
 
@@ -96,10 +124,13 @@ class Pet(QLabel):
             self.update_speech_position
         )
 
+
         self.timer.start(30)
 
 
-        # 眨眼
+
+        # 自动眨眼
+
         self.blink_timer = QTimer()
 
         self.blink_timer.timeout.connect(
@@ -111,7 +142,9 @@ class Pet(QLabel):
         )
 
 
-        # 自动聊天
+
+        # 自动说话
+
         self.talk_timer = QTimer()
 
         self.talk_timer.timeout.connect(
@@ -119,7 +152,15 @@ class Pet(QLabel):
         )
 
         self.talk_timer.start(
-            30000
+            self.talk_interval * 1000
+        )
+
+
+
+        # 托盘
+
+        self.tray = Tray(
+            self
         )
 
     # ======================
@@ -128,31 +169,60 @@ class Pet(QLabel):
 
     def load_config(self):
 
-        if os.path.exists(CONFIG):
+        if not os.path.exists(CONFIG):
+            return
 
-            try:
 
-                with open(
-                    CONFIG,
-                    "r",
-                    encoding="utf-8"
-                ) as f:
+        try:
 
-                    data=json.load(f)
+            with open(
+                CONFIG,
+                "r",
+                encoding="utf-8"
+            ) as f:
 
-                    self.scale=data.get(
-                        "scale",
-                        0.075
-                    )
+                data=json.load(f)
 
-                    self.speed=data.get(
-                        "speed",
-                        3
-                    )
 
-            except:
+            self.scale=data.get(
+                "scale",
+                self.scale
+            )
 
-                pass
+            self.speed=data.get(
+                "speed",
+                self.speed
+            )
+
+            self.wander=data.get(
+                "wander",
+                True
+            )
+
+            self.auto_talk=data.get(
+                "auto_talk",
+                True
+            )
+
+            self.talk_interval=data.get(
+                "talk_interval",
+                30
+            )
+
+            self.float_strength=data.get(
+                "float_strength",
+                2
+            )
+
+            self.random_move=data.get(
+                "random_move",
+                True
+            )
+
+
+        except:
+
+            pass
 
 
 
@@ -167,10 +237,16 @@ class Pet(QLabel):
             json.dump(
                 {
                     "scale":self.scale,
-                    "speed":self.speed
+                    "speed":self.speed,
+                    "wander":self.wander,
+                    "auto_talk":self.auto_talk,
+                    "talk_interval":self.talk_interval,
+                    "float_strength":self.float_strength,
+                    "random_move":self.random_move
                 },
                 f,
-                indent=4
+                indent=4,
+                ensure_ascii=False
             )
 
 
@@ -182,10 +258,6 @@ class Pet(QLabel):
     def load_image(self):
 
         if not os.path.exists(PET_IMAGE):
-
-            self.setText(
-                "缺少 assets/pet.png"
-            )
 
             return
 
@@ -297,17 +369,44 @@ class Pet(QLabel):
 
     def random_talk(self):
 
-        if random.random()<0.5:
+        if self.auto_talk:
 
-            self.show_speech()
+            if random.random()<0.5:
+
+                self.show_speech()
 
 
 
     # ======================
-    # 移动
+    # 智能移动
     # ======================
+
+    def change_direction(self):
+
+        if not self.random_move:
+            return
+
+
+        if random.random()<0.05:
+
+            self.dx=random.choice(
+                [-self.speed, self.speed]
+            )
+
+
+        if random.random()<0.05:
+
+            self.dy=random.choice(
+                [-2,2]
+            )
+
+
 
     def move_pet(self):
+
+        if not self.wander:
+            return
+
 
         screen=QApplication.primaryScreen().availableGeometry()
 
@@ -321,9 +420,15 @@ class Pet(QLabel):
             self.dx*=-1
 
 
+
         if y<=0 or y+self.height()>=screen.height():
 
             self.dy*=-1
+
+
+
+        self.change_direction()
+
 
 
         self.move(
@@ -339,7 +444,9 @@ class Pet(QLabel):
 
 
         offset=int(
-            math.sin(self.float_time)*2
+            math.sin(self.float_time)
+            *
+            self.float_strength
         )
 
 
@@ -348,21 +455,8 @@ class Pet(QLabel):
             self.y()+offset
         )
 
-
-
-    def update_speech_position(self):
-
-        if self.speech.isVisible():
-
-            self.speech.move(
-                self.x(),
-                self.y()-80
-            )
-
-
-
     # ======================
-    # 鼠标
+    # 鼠标互动
     # ======================
 
     def mousePressEvent(self,event):
@@ -409,7 +503,29 @@ class Pet(QLabel):
 
 
     # ======================
-    # 菜单
+    # 托盘控制
+    # ======================
+
+    def pause_move(self):
+
+        self.timer.stop()
+
+
+
+    def resume_move(self):
+
+        self.timer.start(30)
+
+
+
+    def close_app(self):
+
+        QApplication.quit()
+
+
+
+    # ======================
+    # 右键菜单
     # ======================
 
     def show_menu(self,event):
@@ -417,30 +533,23 @@ class Pet(QLabel):
         menu=QMenu()
 
 
-        big=QAction(
-            "放大",
-            self
-        )
-
-        small=QAction(
-            "缩小",
-            self
-        )
-
-        stop=QAction(
-            "停止移动",
-            self
-        )
-
-        start=QAction(
-            "开始移动",
-            self
-        )
-
         talk=QAction(
             "让派蒙说话",
             self
         )
+
+
+        pause=QAction(
+            "暂停移动",
+            self
+        )
+
+
+        resume=QAction(
+            "继续移动",
+            self
+        )
+
 
         quit_action=QAction(
             "退出",
@@ -448,15 +557,19 @@ class Pet(QLabel):
         )
 
 
-        menu.addAction(big)
-        menu.addAction(small)
+        menu.addAction(
+            talk
+        )
 
         menu.addSeparator()
 
-        menu.addAction(stop)
-        menu.addAction(start)
+        menu.addAction(
+            pause
+        )
 
-        menu.addAction(talk)
+        menu.addAction(
+            resume
+        )
 
         menu.addSeparator()
 
@@ -470,58 +583,36 @@ class Pet(QLabel):
         )
 
 
-
-        if action==big:
-
-            self.scale+=0.01
-
-            self.save_config()
-
-            self.load_image()
-
-
-
-        elif action==small:
-
-            self.scale=max(
-                0.02,
-                self.scale-0.01
-            )
-
-            self.save_config()
-
-            self.load_image()
-
-
-
-        elif action==stop:
-
-            self.timer.stop()
-
-
-
-        elif action==start:
-
-            self.timer.start(30)
-
-
-
-        elif action==talk:
+        if action==talk:
 
             self.show_speech()
 
 
 
+        elif action==pause:
+
+            self.pause_move()
+
+
+
+        elif action==resume:
+
+            self.resume_move()
+
+
+
         elif action==quit_action:
 
-            QApplication.quit()
+            self.close_app()
 
 
 
 if __name__=="__main__":
 
 
-    app=QApplication(sys.argv)
+    app=QApplication(
+        sys.argv
+    )
 
 
     pet=Pet()
