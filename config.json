@@ -1,0 +1,13 @@
+{
+    "scale": 0.075,
+    "speed": 3,
+
+    "wander": true,
+
+    "auto_talk": true,
+    "talk_interval": 30,
+
+    "float_strength": 2,
+
+    "random_move": true
+}
