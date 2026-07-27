@@ -21,13 +21,12 @@ class Animation:
         )
 
 
-
     def load_frames(self, folder):
 
         self.frames.clear()
 
-        if not os.path.exists(folder):
 
+        if not os.path.exists(folder):
             return
 
 
@@ -41,15 +40,14 @@ class Animation:
 
         for file in files:
 
-            path = os.path.join(
-                folder,
-                file
-            )
-
             self.frames.append(
-                QPixmap(path)
+                QPixmap(
+                    os.path.join(
+                        folder,
+                        file
+                    )
+                )
             )
-
 
 
     def play(self, folder, fps=5):
@@ -57,7 +55,10 @@ class Animation:
         self.load_frames(folder)
 
 
+        # 没有动画图片，保持原图
         if len(self.frames)==0:
+
+            self.timer.stop()
 
             return
 
@@ -70,17 +71,14 @@ class Animation:
         )
 
 
-
     def stop(self):
 
         self.timer.stop()
 
 
-
     def next_frame(self):
 
         if len(self.frames)==0:
-
             return
 
 
