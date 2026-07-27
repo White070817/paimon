@@ -1,6 +1,7 @@
 import sys
 import os
 import json
+import random
 
 from PySide6.QtWidgets import QApplication, QLabel, QMenu
 from PySide6.QtGui import QPixmap, QAction
@@ -64,6 +65,8 @@ class Pet(QLabel):
         # 动画系统
         self.animation = Animation(self)
 
+
+        # 默认待机
         self.start_idle()
 
 
@@ -73,14 +76,29 @@ class Pet(QLabel):
 
 
         self.timer = QTimer()
-
         self.timer.timeout.connect(
             self.move_pet
         )
-
         self.timer.start(30)
 
 
+
+        # 眨眼计时器
+        self.blink_timer = QTimer()
+
+        self.blink_timer.timeout.connect(
+            self.random_blink
+        )
+
+        self.blink_timer.start(
+            10000
+        )
+
+
+
+    # -------------------
+    # 配置
+    # -------------------
 
     def load_config(self):
 
@@ -131,6 +149,10 @@ class Pet(QLabel):
 
 
 
+    # -------------------
+    # 图片
+    # -------------------
+
     def load_image(self):
 
         if not os.path.exists(PET_IMAGE):
@@ -166,26 +188,71 @@ class Pet(QLabel):
 
 
 
-    def start_idle(self):
+    # -------------------
+    # 动画
+    # -------------------
+
+    def play_animation(self,name,fps=5):
 
         folder=os.path.join(
             BASE,
             "assets",
             "animations",
-            "idle"
+            name
         )
 
 
-        self.animation.load_frames(
-            folder
+        self.animation.play(
+            folder,
+            fps
         )
 
 
-        self.animation.start(
+
+    def start_idle(self):
+
+        self.play_animation(
+            "idle",
             5
         )
 
 
+
+    def random_blink(self):
+
+        if random.random()<0.4:
+
+            self.play_animation(
+                "blink",
+                8
+            )
+
+
+            QTimer.singleShot(
+                1500,
+                self.start_idle
+            )
+
+
+
+    def happy(self):
+
+        self.play_animation(
+            "happy",
+            8
+        )
+
+
+        QTimer.singleShot(
+            2000,
+            self.start_idle
+        )
+
+
+
+    # -------------------
+    # 移动
+    # -------------------
 
     def move_pet(self):
 
@@ -213,17 +280,27 @@ class Pet(QLabel):
 
 
 
+    # -------------------
+    # 鼠标
+    # -------------------
+
     def mousePressEvent(self,event):
 
         if event.button()==Qt.LeftButton:
 
+
+            self.happy()
+
+
             self.drag=True
+
 
             self.offset=(
                 event.globalPosition().toPoint()
                 -
                 self.pos()
             )
+
 
 
         elif event.button()==Qt.RightButton:
@@ -249,6 +326,10 @@ class Pet(QLabel):
         self.drag=False
 
 
+
+    # -------------------
+    # 菜单
+    # -------------------
 
     def show_menu(self,event):
 
@@ -291,7 +372,9 @@ class Pet(QLabel):
 
         menu.addSeparator()
 
-        menu.addAction(quit_action)
+        menu.addAction(
+            quit_action
+        )
 
 
         action=menu.exec(
@@ -342,11 +425,15 @@ class Pet(QLabel):
 
 if __name__=="__main__":
 
+
     app=QApplication(sys.argv)
+
 
     pet=Pet()
 
+
     pet.show()
+
 
     sys.exit(
         app.exec()
