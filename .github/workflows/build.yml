@@ -6,52 +6,29 @@ on:
     branches:
       - main
 
-
 jobs:
-
   build:
-
     runs-on: windows-latest
 
-
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
+      - name: Install
+        run: |
+          pip install PySide6 pyinstaller
 
-    - uses: actions/setup-python@v5
+      - name: Build EXE
+        run: |
+          pyinstaller --name PaimonDesktopPet --onefile --windowed --add-data "pet.png;." main.py
 
-      with:
-        python-version: "3.11"
-
-
-    - name: Install
-
-      run: |
-
-        pip install PySide6 pyinstaller
-
-
-
-    - name: Build EXE
-
-      run: |
-
-        pyinstaller ^
-        --name PaimonDesktopPet ^
-        --onefile ^
-        --windowed ^
-        --add-data "pet.png;." ^
-        main.py
-
-
-
-    - name: Upload
-
-      uses: actions/upload-artifact@v4
-
-      with:
-
-        name: PaimonDesktopPet
-
-        path: dist/PaimonDesktopPet.exe
+      - name: Upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: PaimonDesktopPet
+          path: dist/PaimonDesktopPet.exe
