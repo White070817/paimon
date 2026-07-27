@@ -2,6 +2,7 @@ import sys
 import os
 import json
 import random
+import math
 
 from PySide6.QtWidgets import QApplication, QLabel, QMenu
 from PySide6.QtGui import QPixmap, QAction
@@ -59,6 +60,9 @@ class Pet(QLabel):
         self.offset = QPoint()
 
 
+        self.float_time = 0
+
+
         self.load_image()
 
 
@@ -66,24 +70,30 @@ class Pet(QLabel):
         self.animation = Animation(self)
 
 
-        # 默认待机
         self.start_idle()
 
 
-        # 移动
+        # 移动方向
         self.dx = self.speed
         self.dy = 2
 
 
+        # 移动计时器
         self.timer = QTimer()
+
         self.timer.timeout.connect(
             self.move_pet
         )
+
+        self.timer.timeout.connect(
+            self.float_pet
+        )
+
         self.timer.start(30)
 
 
 
-        # 眨眼计时器
+        # 随机眨眼
         self.blink_timer = QTimer()
 
         self.blink_timer.timeout.connect(
@@ -96,9 +106,9 @@ class Pet(QLabel):
 
 
 
-    # -------------------
+    # ======================
     # 配置
-    # -------------------
+    # ======================
 
     def load_config(self):
 
@@ -149,9 +159,9 @@ class Pet(QLabel):
 
 
 
-    # -------------------
+    # ======================
     # 图片
-    # -------------------
+    # ======================
 
     def load_image(self):
 
@@ -164,12 +174,12 @@ class Pet(QLabel):
             return
 
 
-        pix=QPixmap(
+        pix = QPixmap(
             PET_IMAGE
         )
 
 
-        pix=pix.scaled(
+        pix = pix.scaled(
             int(pix.width()*self.scale),
             int(pix.height()*self.scale),
             Qt.KeepAspectRatio,
@@ -188,11 +198,15 @@ class Pet(QLabel):
 
 
 
-    # -------------------
+    # ======================
     # 动画
-    # -------------------
+    # ======================
 
-    def play_animation(self,name,fps=5):
+    def play_animation(
+        self,
+        name,
+        fps=5
+    ):
 
         folder=os.path.join(
             BASE,
@@ -220,7 +234,7 @@ class Pet(QLabel):
 
     def random_blink(self):
 
-        if random.random()<0.4:
+        if random.random() < 0.4:
 
             self.play_animation(
                 "blink",
@@ -250,27 +264,27 @@ class Pet(QLabel):
 
 
 
-    # -------------------
-    # 移动
-    # -------------------
+    # ======================
+    # 移动 + 漂浮
+    # ======================
 
     def move_pet(self):
 
-        screen=QApplication.primaryScreen().availableGeometry()
+        screen = QApplication.primaryScreen().availableGeometry()
 
 
-        x=self.x()+self.dx
-        y=self.y()+self.dy
+        x = self.x()+self.dx
+        y = self.y()+self.dy
 
 
-        if x<=0 or x+self.width()>=screen.width():
+        if x <= 0 or x+self.width() >= screen.width():
 
-            self.dx*=-1
+            self.dx *= -1
 
 
-        if y<=0 or y+self.height()>=screen.height():
+        if y <= 0 or y+self.height() >= screen.height():
 
-            self.dy*=-1
+            self.dy *= -1
 
 
         self.move(
@@ -280,14 +294,30 @@ class Pet(QLabel):
 
 
 
-    # -------------------
+    def float_pet(self):
+
+        self.float_time += 0.08
+
+
+        offset = int(
+            math.sin(self.float_time)*2
+        )
+
+
+        self.move(
+            self.x(),
+            self.y()+offset
+        )
+
+
+
+    # ======================
     # 鼠标
-    # -------------------
+    # ======================
 
     def mousePressEvent(self,event):
 
         if event.button()==Qt.LeftButton:
-
 
             self.happy()
 
@@ -295,12 +325,11 @@ class Pet(QLabel):
             self.drag=True
 
 
-            self.offset=(
+            self.offset = (
                 event.globalPosition().toPoint()
                 -
                 self.pos()
             )
-
 
 
         elif event.button()==Qt.RightButton:
@@ -327,9 +356,9 @@ class Pet(QLabel):
 
 
 
-    # -------------------
+    # ======================
     # 菜单
-    # -------------------
+    # ======================
 
     def show_menu(self,event):
 
@@ -372,9 +401,7 @@ class Pet(QLabel):
 
         menu.addSeparator()
 
-        menu.addAction(
-            quit_action
-        )
+        menu.addAction(quit_action)
 
 
         action=menu.exec(
@@ -384,7 +411,7 @@ class Pet(QLabel):
 
         if action==big:
 
-            self.scale+=0.01
+            self.scale += 0.01
 
             self.save_config()
 
@@ -425,15 +452,11 @@ class Pet(QLabel):
 
 if __name__=="__main__":
 
-
     app=QApplication(sys.argv)
-
 
     pet=Pet()
 
-
     pet.show()
-
 
     sys.exit(
         app.exec()
