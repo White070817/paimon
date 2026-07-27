@@ -1,21 +1,38 @@
 import sys
 import os
+import json
 import random
+
 from PySide6.QtWidgets import QApplication, QLabel, QMenu
 from PySide6.QtGui import QPixmap, QAction
 from PySide6.QtCore import Qt, QTimer, QPoint
 
 
-def resource_path(name):
-    if hasattr(sys, "_MEIPASS"):
-        return os.path.join(sys._MEIPASS, name)
-    return os.path.join(os.path.dirname(__file__), name)
+BASE = os.path.dirname(
+    sys.executable if getattr(sys, "frozen", False)
+    else __file__
+)
+
+
+ASSET = os.path.join(
+    BASE,
+    "assets",
+    "pet.png"
+)
+
+
+CONFIG = os.path.join(
+    BASE,
+    "config.json"
+)
 
 
 class Pet(QLabel):
 
     def __init__(self):
+
         super().__init__()
+
 
         self.setWindowFlags(
             Qt.FramelessWindowHint |
@@ -23,63 +40,128 @@ class Pet(QLabel):
             Qt.Tool
         )
 
-        self.setAttribute(Qt.WA_TranslucentBackground)
 
-        self.size_scale = 1.0
+        self.setAttribute(
+            Qt.WA_TranslucentBackground
+        )
+
+
+        self.scale = 1.0
+
+
+        self.load_config()
+
 
         self.load_image()
 
-        self.dx = 3
+
+        self.dx = self.speed
         self.dy = 2
 
-        self.dragging = False
+
+        self.drag = False
         self.offset = QPoint()
 
+
         self.timer = QTimer()
-        self.timer.timeout.connect(self.move_pet)
+        self.timer.timeout.connect(
+            self.move_pet
+        )
+
         self.timer.start(30)
+
+
+
+    def load_config(self):
+
+        self.speed = 3
+
+        if os.path.exists(CONFIG):
+
+            with open(CONFIG,"r",
+                      encoding="utf8") as f:
+
+                data=json.load(f)
+
+                self.scale=data.get(
+                    "scale",
+                    1.0
+                )
+
+                self.speed=data.get(
+                    "speed",
+                    3
+                )
+
+
+
+    def save_config(self):
+
+        with open(CONFIG,"w",
+                  encoding="utf8") as f:
+
+            json.dump(
+                {
+                    "scale":self.scale,
+                    "speed":self.speed
+                },
+                f,
+                indent=4
+            )
+
 
 
     def load_image(self):
 
-        path = resource_path("pet.png")
+        if not os.path.exists(ASSET):
 
-        pix = QPixmap(path)
+            self.setText(
+                "缺少 assets/pet.png"
+            )
 
-        if pix.isNull():
-            self.setText("pet.png missing")
             return
 
 
-        # 自动缩放
-        pix = pix.scaled(
-            int(pix.width()*self.size_scale),
-            int(pix.height()*self.size_scale),
+        pix=QPixmap(ASSET)
+
+
+        pix=pix.scaled(
+            int(pix.width()*self.scale),
+            int(pix.height()*self.scale),
             Qt.KeepAspectRatio,
             Qt.SmoothTransformation
         )
 
 
         self.setPixmap(pix)
-        self.resize(pix.size())
+
+        self.resize(
+            pix.size()
+        )
+
 
 
     def move_pet(self):
 
-        if self.dragging:
+        if self.drag:
             return
 
-        screen = QApplication.primaryScreen().availableGeometry()
 
-        x = self.x()+self.dx
-        y = self.y()+self.dy
+        screen=QApplication.primaryScreen().availableGeometry()
 
 
-        if x < 0 or x+self.width()>screen.width():
-            self.dx *= -1
+        x=self.x()+self.dx
+        y=self.y()+self.dy
 
-        if y < 0 or y+self.height()>screen.height():
-            self.dy *= -1
+
+        if x<0 or x+self.width()>screen.width():
+
+            self.dx*=-1
+
+
+        if y<0 or y+self.height()>screen.height():
+
+            self.dy*=-1
 
 
         self.move(
@@ -88,57 +170,60 @@ class Pet(QLabel):
         )
 
 
-    def mousePressEvent(self,event):
 
-        if event.button()==Qt.LeftButton:
+    def mousePressEvent(self,e):
 
-            self.dragging=True
+        if e.button()==Qt.LeftButton:
+
+            self.drag=True
 
             self.offset=(
-                event.globalPosition().toPoint()
+                e.globalPosition().toPoint()
                 -
                 self.pos()
             )
 
 
-        elif event.button()==Qt.RightButton:
+        elif e.button()==Qt.RightButton:
 
-            self.menu(event)
+            self.menu(e)
 
 
-    def mouseMoveEvent(self,event):
 
-        if self.dragging:
+    def mouseMoveEvent(self,e):
+
+        if self.drag:
 
             self.move(
-                event.globalPosition().toPoint()
+                e.globalPosition().toPoint()
                 -
                 self.offset
             )
 
 
-    def mouseReleaseEvent(self,event):
 
-        self.dragging=False
+    def mouseReleaseEvent(self,e):
+
+        self.drag=False
 
 
 
-    def menu(self,event):
+    def menu(self,e):
 
         menu=QMenu()
 
 
-        bigger=QAction("放大",self)
-        smaller=QAction("缩小",self)
+        big=QAction("放大",self)
+        small=QAction("缩小",self)
 
-        stop=QAction("停止移动",self)
-        start=QAction("继续移动",self)
+        stop=QAction("停止",self)
+        start=QAction("移动",self)
 
         quit=QAction("退出",self)
 
 
-        menu.addAction(bigger)
-        menu.addAction(smaller)
+        menu.addAction(big)
+        menu.addAction(small)
 
         menu.addSeparator()
 
@@ -150,57 +235,49 @@ class Pet(QLabel):
         menu.addAction(quit)
 
 
-        action=menu.exec(
-            event.globalPosition().toPoint()
+        a=menu.exec(
+            e.globalPosition().toPoint()
         )
 
 
-        if action==bigger:
+        if a==big:
 
-            self.size_scale=min(
-                self.size_scale+0.1,
-                2
-            )
-
+            self.scale+=0.1
+            self.save_config()
             self.load_image()
 
 
+        elif a==small:
 
-        elif action==smaller:
-
-            self.size_scale=max(
-                self.size_scale-0.1,
-                0.3
+            self.scale=max(
+                0.3,
+                self.scale-0.1
             )
 
+            self.save_config()
             self.load_image()
 
 
-
-        elif action==stop:
+        elif a==stop:
 
             self.timer.stop()
 
 
-
-        elif action==start:
+        elif a==start:
 
             self.timer.start(30)
 
 
-
-        elif action==quit:
+        elif a==quit:
 
             QApplication.quit()
 
 
 
-if __name__=="__main__":
+app=QApplication(sys.argv)
 
-    app=QApplication(sys.argv)
+pet=Pet()
 
-    pet=Pet()
+pet.show()
 
-    pet.show()
-
-    sys.exit(app.exec())
+sys.exit(app.exec())
