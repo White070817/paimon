@@ -219,3 +219,319 @@ class Pet(QLabel):
         self.resize(
             img.size()
         )
+
+# main.py
+# Paimon Desktop Pet V1.0
+# continuation
+
+    # ----------------
+    # animation
+    # ----------------
+
+
+    def start_idle(self):
+
+        self.animation.play(
+            "idle"
+        )
+
+
+    def play_animation(self, name):
+
+        self.animation.play(
+            name
+        )
+
+
+
+    # ----------------
+    # speech
+    # ----------------
+
+
+    def show_speech(self):
+
+        self.speech.move(
+            self.x(),
+            self.y() - 80
+        )
+
+        self.speech.show_message()
+
+
+
+    def random_talk(self):
+
+        if self.auto_talk:
+
+            if random.random() < 0.5:
+
+                self.show_speech()
+
+
+
+    def update_speech(self):
+
+        if self.speech.isVisible():
+
+            self.speech.move(
+                self.x(),
+                self.y() - 80
+            )
+
+
+
+    # ----------------
+    # movement
+    # ----------------
+
+
+    def move_pet(self):
+
+        if not self.wander:
+
+            return
+
+
+        screen = QApplication.primaryScreen().availableGeometry()
+
+
+        x = self.x() + self.dx
+        y = self.y() + self.dy
+
+
+        if x <= 0 or x + self.width() >= screen.width():
+
+            self.dx *= -1
+
+
+        if y <= 0 or y + self.height() >= screen.height():
+
+            self.dy *= -1
+
+
+        self.move(
+            x,
+            y
+        )
+
+
+
+    def float_pet(self):
+
+        self.float_time += 0.08
+
+
+        offset = int(
+            math.sin(self.float_time)
+            * 2
+        )
+
+
+        self.move(
+            self.x(),
+            self.y() + offset
+        )
+
+
+
+    # ----------------
+    # menu
+    # ----------------
+
+
+    def show_menu(self, event):
+
+        menu = QMenu(self)
+
+
+        talk = QAction(
+            "让派蒙说话",
+            self
+        )
+
+        bigger = QAction(
+            "放大",
+            self
+        )
+
+        smaller = QAction(
+            "缩小",
+            self
+        )
+
+        faster = QAction(
+            "加速",
+            self
+        )
+
+        slower = QAction(
+            "减速",
+            self
+        )
+
+        pause = QAction(
+            "暂停移动",
+            self
+        )
+
+        resume = QAction(
+            "继续移动",
+            self
+        )
+
+        quit_action = QAction(
+            "退出",
+            self
+        )
+
+
+        menu.addAction(talk)
+
+        menu.addSeparator()
+
+        menu.addAction(bigger)
+        menu.addAction(smaller)
+
+        menu.addSeparator()
+
+        menu.addAction(faster)
+        menu.addAction(slower)
+
+        menu.addSeparator()
+
+        menu.addAction(pause)
+        menu.addAction(resume)
+
+        menu.addSeparator()
+
+        menu.addAction(quit_action)
+
+
+
+        action = menu.exec(
+            event.globalPosition().toPoint()
+        )
+
+
+        if action == talk:
+
+            self.show_speech()
+
+
+        elif action == bigger:
+
+            self.scale += 0.01
+
+            self.resize_pet()
+
+            self.save_config()
+
+
+        elif action == smaller:
+
+            self.scale -= 0.01
+
+            if self.scale < 0.02:
+
+                self.scale = 0.02
+
+            self.resize_pet()
+
+            self.save_config()
+
+
+        elif action == faster:
+
+            self.speed += 1
+
+            self.dx = self.speed
+
+            self.save_config()
+
+
+        elif action == slower:
+
+            self.speed -= 1
+
+            if self.speed < 1:
+
+                self.speed = 1
+
+            self.dx = self.speed
+
+            self.save_config()
+
+
+        elif action == pause:
+
+            self.timer.stop()
+
+
+        elif action == resume:
+
+            self.timer.start(30)
+
+
+        elif action == quit_action:
+
+            QApplication.quit()
+
+
+
+    # ----------------
+    # mouse
+    # ----------------
+
+
+    def mousePressEvent(self, event):
+
+        if event.button() == Qt.LeftButton:
+
+            self.dragging = True
+
+            self.drag_pos = (
+                event.globalPosition()
+                .toPoint()
+                -
+                self.pos()
+            )
+
+
+        elif event.button() == Qt.RightButton:
+
+            self.show_menu(event)
+
+
+
+    def mouseMoveEvent(self, event):
+
+        if self.dragging:
+
+            self.move(
+                event.globalPosition()
+                .toPoint()
+                -
+                self.drag_pos
+            )
+
+
+
+    def mouseReleaseEvent(self, event):
+
+        self.dragging = False
+
+
+
+if __name__ == "__main__":
+
+    app = QApplication(sys.argv)
+
+    pet = Pet()
+
+    pet.show()
+
+    sys.exit(
+        app.exec()
+    )
+
