@@ -2,13 +2,11 @@
 
 from PySide6.QtWidgets import (
     QSystemTrayIcon,
-    QMenu
+    QMenu,
+    QApplication
 )
 
-from PySide6.QtGui import (
-    QAction,
-    QIcon
-)
+from PySide6.QtGui import QAction
 
 
 class Tray:
@@ -17,17 +15,13 @@ class Tray:
 
         self.pet = pet
 
-
         self.tray = QSystemTrayIcon()
-
 
         self.tray.setToolTip(
             "Paimon Desktop Pet"
         )
 
-
         self.create_menu()
-
 
         self.tray.show()
 
@@ -42,9 +36,11 @@ class Tray:
             "显示派蒙"
         )
 
+
         hide = QAction(
             "隐藏派蒙"
         )
+
 
         quit_action = QAction(
             "退出"
@@ -62,7 +58,7 @@ class Tray:
 
 
         quit_action.triggered.connect(
-            self.pet.close_app
+            self.close_app
         )
 
 
@@ -70,11 +66,14 @@ class Tray:
             show
         )
 
+
         menu.addAction(
             hide
         )
 
+
         menu.addSeparator()
+
 
         menu.addAction(
             quit_action
@@ -96,3 +95,9 @@ class Tray:
     def hide_pet(self):
 
         self.pet.hide()
+
+
+
+    def close_app(self):
+
+        QApplication.quit()
