@@ -1,12 +1,17 @@
-# tray.py
-
 from PySide6.QtWidgets import (
     QSystemTrayIcon,
     QMenu,
     QApplication
 )
 
-from PySide6.QtGui import QAction
+from PySide6.QtGui import (
+    QAction,
+    QIcon
+)
+
+import os
+import sys
+
 
 
 class Tray:
@@ -15,13 +20,46 @@ class Tray:
 
         self.pet = pet
 
+
         self.tray = QSystemTrayIcon()
+
+
+        # 获取资源路径
+        if getattr(sys, "frozen", False):
+
+            base = os.path.dirname(
+                sys.executable
+            )
+
+        else:
+
+            base = os.path.dirname(
+                os.path.abspath(__file__)
+            )
+
+
+        icon_path = os.path.join(
+            base,
+            "assets",
+            "pet.png"
+        )
+
+
+        # 设置托盘图标
+        if os.path.exists(icon_path):
+
+            self.tray.setIcon(
+                QIcon(icon_path)
+            )
+
 
         self.tray.setToolTip(
             "Paimon Desktop Pet"
         )
 
+
         self.create_menu()
+
 
         self.tray.show()
 
@@ -62,22 +100,13 @@ class Tray:
         )
 
 
-        menu.addAction(
-            show
-        )
+        menu.addAction(show)
 
-
-        menu.addAction(
-            hide
-        )
-
+        menu.addAction(hide)
 
         menu.addSeparator()
 
-
-        menu.addAction(
-            quit_action
-        )
+        menu.addAction(quit_action)
 
 
         self.tray.setContextMenu(
