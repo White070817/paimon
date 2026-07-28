@@ -1,5 +1,14 @@
-from PySide6.QtWidgets import QSystemTrayIcon, QMenu
-from PySide6.QtGui import QIcon, QAction
+# tray.py
+
+from PySide6.QtWidgets import (
+    QSystemTrayIcon,
+    QMenu
+)
+
+from PySide6.QtGui import (
+    QAction,
+    QIcon
+)
 
 
 class Tray:
@@ -12,73 +21,57 @@ class Tray:
         self.tray = QSystemTrayIcon()
 
 
-        # 没有图标时使用空图标
-        self.tray.setIcon(
-            QIcon()
+        self.tray.setToolTip(
+            "Paimon Desktop Pet"
         )
 
+
+        self.create_menu()
+
+
+        self.tray.show()
+
+
+
+    def create_menu(self):
 
         menu = QMenu()
 
 
-        show_action = QAction(
-            "显示派蒙",
-            self.tray
+        show = QAction(
+            "显示派蒙"
         )
 
-
-        hide_action = QAction(
-            "隐藏派蒙",
-            self.tray
+        hide = QAction(
+            "隐藏派蒙"
         )
-
-
-        talk_action = QAction(
-            "让派蒙说话",
-            self.tray
-        )
-
-
-        pause_action = QAction(
-            "暂停移动",
-            self.tray
-        )
-
-
-        resume_action = QAction(
-            "继续移动",
-            self.tray
-        )
-
 
         quit_action = QAction(
-            "退出",
-            self.tray
+            "退出"
+        )
+
+
+        show.triggered.connect(
+            self.show_pet
+        )
+
+
+        hide.triggered.connect(
+            self.hide_pet
+        )
+
+
+        quit_action.triggered.connect(
+            self.pet.close_app
         )
 
 
         menu.addAction(
-            show_action
+            show
         )
 
         menu.addAction(
-            hide_action
-        )
-
-        menu.addSeparator()
-
-        menu.addAction(
-            talk_action
-        )
-
-        menu.addSeparator()
-
-        menu.addAction(
-            pause_action
-        )
-
-        menu.addAction(
-            resume_action
+            hide
         )
 
         menu.addSeparator()
@@ -93,34 +86,13 @@ class Tray:
         )
 
 
-        show_action.triggered.connect(
-            self.pet.show
-        )
+
+    def show_pet(self):
+
+        self.pet.show()
 
 
-        hide_action.triggered.connect(
-            self.pet.hide
-        )
 
+    def hide_pet(self):
 
-        talk_action.triggered.connect(
-            self.pet.show_speech
-        )
-
-
-        pause_action.triggered.connect(
-            self.pet.pause_move
-        )
-
-
-        resume_action.triggered.connect(
-            self.pet.resume_move
-        )
-
-
-        quit_action.triggered.connect(
-            self.pet.close_app
-        )
-
-
-        self.tray.show()
+        self.pet.hide()
