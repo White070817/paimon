@@ -1,20 +1,10 @@
+# speech.py
+
 from PySide6.QtWidgets import QLabel
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QFont
-import random
 
 
 class Speech(QLabel):
-
-    texts = [
-        "派蒙才不是应急食品！",
-        "旅行者，今天也要加油！",
-        "派蒙饿了……",
-        "不要一直盯着派蒙看啦！",
-        "嘿嘿，派蒙来了！",
-        "今天也要努力哦！"
-    ]
-
 
     def __init__(self):
 
@@ -22,35 +12,49 @@ class Speech(QLabel):
 
 
         self.setWindowFlags(
-            Qt.FramelessWindowHint |
-            Qt.Tool |
+            Qt.FramelessWindowHint
+            |
+            Qt.Tool
+            |
             Qt.WindowStaysOnTopHint
+        )
+
+
+        self.setAttribute(
+            Qt.WA_TranslucentBackground
         )
 
 
         self.setStyleSheet(
             """
-            background:white;
-            border-radius:10px;
-            padding:8px;
-            color:black;
+            QLabel {
+                background-color: rgba(0,0,0,160);
+                color:white;
+                border-radius:10px;
+                padding:10px;
+                font-size:16px;
+            }
             """
-        )
-
-
-        self.setFont(
-            QFont(
-                "Microsoft YaHei",
-                12
-            )
         )
 
 
         self.hide()
 
 
+        self.texts = [
+            "旅行者！派蒙来啦！",
+            "今天也要加油哦！",
+            "派蒙肚子饿了……",
+            "不要忘记休息！",
+            "嘿！看看派蒙！"
+        ]
 
-    def show_text(self):
+
+
+    def show_message(self):
+
+        import random
+
 
         self.setText(
             random.choice(
@@ -60,6 +64,7 @@ class Speech(QLabel):
 
 
         self.adjustSize()
+
 
         self.show()
 
