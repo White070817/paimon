@@ -1,3 +1,5 @@
+# animation.py
+
 import os
 
 from PySide6.QtCore import QTimer
@@ -6,9 +8,9 @@ from PySide6.QtGui import QPixmap
 
 class Animation:
 
-    def __init__(self, label):
+    def __init__(self, pet):
 
-        self.label = label
+        self.pet = pet
 
         self.frames = []
 
@@ -21,69 +23,76 @@ class Animation:
         )
 
 
-    def load_frames(self, folder):
+    def play(self, name):
+
+        folder = os.path.join(
+            os.path.dirname(
+                os.path.abspath(__file__)
+            ),
+            "assets",
+            "animations",
+            name
+        )
+
 
         self.frames.clear()
 
-
         if not os.path.exists(folder):
+
             return
 
 
         files = sorted(
-            [
-                f for f in os.listdir(folder)
-                if f.lower().endswith(".png")
-            ]
+            os.listdir(folder)
         )
 
 
         for file in files:
 
-            self.frames.append(
-                QPixmap(
+            if file.lower().endswith(
+                (".png", ".jpg", ".jpeg")
+            ):
+
+                self.frames.append(
                     os.path.join(
                         folder,
                         file
                     )
                 )
-            )
 
 
-    def play(self, folder, fps=5):
-
-        self.load_frames(folder)
-
-
-        # 没有动画图片，保持原图
-        if len(self.frames)==0:
-
-            self.timer.stop()
+        if len(self.frames) == 0:
 
             return
 
 
-        self.index=0
-
+        self.index = 0
 
         self.timer.start(
-            int(1000/fps)
+            200
         )
-
-
-    def stop(self):
-
-        self.timer.stop()
 
 
     def next_frame(self):
 
-        if len(self.frames)==0:
+        if len(self.frames) == 0:
+
             return
 
 
-        self.label.setPixmap(
+        pix = QPixmap(
             self.frames[self.index]
+        )
+
+
+        pix = pix.scaled(
+            self.pet.size(),
+            aspectMode=1
+        )
+
+
+        self.pet.setPixmap(
+            pix
         )
 
 
