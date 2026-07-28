@@ -1,13 +1,11 @@
+# .github/workflows/build.yml
+
 name: Build Paimon Desktop Pet
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - main
 
 jobs:
-
   build:
 
     runs-on: windows-latest
@@ -24,24 +22,28 @@ jobs:
         python-version: "3.11"
 
 
-    - name: Install requirements
+    - name: Install
       run: |
         pip install -r requirements.txt
+        pip install pyinstaller
 
 
     - name: Build EXE
       run: |
-        pyinstaller --name PaimonDesktopPet --onefile --windowed main.py
+        pyinstaller ^
+          --name PaimonDesktopPet ^
+          --windowed ^
+          --onefile ^
+          main.py
 
 
-    - name: Prepare Assets
+    - name: Copy Assets
       run: |
         mkdir dist\assets
         copy assets\pet.png dist\assets\pet.png
-        xcopy assets\animations dist\assets\animations /E /I
 
 
-    - name: Upload Artifact
+    - name: Upload
       uses: actions/upload-artifact@v4
       with:
         name: PaimonDesktopPet
