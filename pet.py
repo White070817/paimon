@@ -1,127 +1,254 @@
 # pet.py
 
+import os
+import sys
+import json
 import random
 import math
 
-from PySide6.QtCore import QTimer
+from PySide6.QtWidgets import QLabel, QMenu
+from PySide6.QtGui import QPixmap, QAction
+from PySide6.QtCore import Qt, QTimer, QPoint
 
 
-class PetMovement:
+from animation import Animation
+from speech import Speech
+from tray import Tray
 
-    def __init__(self, pet):
 
-        self.pet = pet
+def get_base():
 
-        self.speed = 3
+    if getattr(sys, "frozen", False):
+
+        return os.path.dirname(
+            sys.executable
+        )
+
+    return os.path.dirname(
+        os.path.abspath(__file__)
+    )
+
+
+
+BASE = get_base()
+
+ASSETS = os.path.join(
+    BASE,
+    "assets"
+)
+
+CONFIG = os.path.join(
+    BASE,
+    "config.json"
+)
+
+
+DEFAULT_CONFIG = {
+    "scale": 0.075,
+    "speed": 3,
+    "wander": True,
+    "auto_talk": True
+}
+
+
+
+class Pet(QLabel):
+
+
+    def __init__(self):
+
+        super().__init__()
+
+
+        self.setWindowFlags(
+            Qt.FramelessWindowHint
+            |
+            Qt.WindowStaysOnTopHint
+            |
+            Qt.Tool
+        )
+
+
+        self.setAttribute(
+            Qt.WA_TranslucentBackground
+        )
+
+
+        self.load_config()
+
+
+        self.dragging = False
+
+        self.drag_offset = QPoint()
+
 
         self.direction_x = 1
+
         self.direction_y = 0
+
 
         self.float_time = 0
 
-        self.target_change = 0
+
+        self.load_image()
 
 
-        self.timer = QTimer()
-
-        self.timer.timeout.connect(
-            self.update
+        self.animation = Animation(
+            self
         )
 
 
-    def start(self):
-
-        self.timer.start(30)
+        self.speech = Speech()
 
 
-
-    def update(self):
-
-        screen = self.pet.screen().availableGeometry()
-
-
-        x = self.pet.x()
-        y = self.pet.y()
+        self.tray = Tray(
+            self
+        )
 
 
-        width = self.pet.width()
-        height = self.pet.height()
+        self.move_timer = QTimer()
+
+        self.move_timer.timeout.connect(
+            self.update_movement
+        )
+
+        self.move_timer.start(
+            30
+        )
 
 
+        self.talk_timer = QTimer()
 
-        # 提前转向，不撞墙
+        self.talk_timer.timeout.connect(
+            self.random_talk
+        )
 
-        if x < 80:
-
-            self.direction_x = 1
-
-
-        elif x + width > screen.width() - 80:
-
-            self.direction_x = -1
+        self.talk_timer.start(
+            30000
+        )
 
 
-
-        if y < 80:
-
-            self.direction_y = 1
-
-
-        elif y + height > screen.height() - 120:
-
-            self.direction_y = -1
+        self.start_idle()
 
 
 
-        # 随机改变方向
-
-        self.target_change += 1
-
-
-        if self.target_change > 150:
-
-            self.target_change = 0
+    # =================
+    # config
+    # =================
 
 
-            if random.random() < 0.5:
+    def load_config(self):
 
-                self.direction_x = random.choice(
-                    [-1, 1]
-                )
+        if not os.path.exists(CONFIG):
 
+            self.scale = 0.075
+            self.speed = 3
+            self.wander = True
+            self.auto_talk = True
 
-            if random.random() < 0.3:
+            self.save_config()
 
-                self.direction_y = random.choice(
-                    [-1, 0, 1]
-                )
-
-
-
-        x += self.direction_x * self.speed
-
-        y += self.direction_y * self.speed
+            return
 
 
+        with open(
+            CONFIG,
+            "r",
+            encoding="utf-8"
+        ) as f:
 
-        self.pet.move(
-            x,
-            y
+            data = json.load(f)
+
+
+        self.scale = data.get(
+            "scale",
+            0.075
+        )
+
+        self.speed = data.get(
+            "speed",
+            3
+        )
+
+        self.wander = data.get(
+            "wander",
+            True
+        )
+
+        self.auto_talk = data.get(
+            "auto_talk",
+            True
         )
 
 
 
-        # 漂浮效果
+    def save_config(self):
 
-        self.float_time += 0.08
+        with open(
+            CONFIG,
+            "w",
+            encoding="utf-8"
+        ) as f:
+
+            json.dump(
+                {
+                    "scale": self.scale,
+                    "speed": self.speed,
+                    "wander": self.wander,
+                    "auto_talk": self.auto_talk
+                },
+                f,
+                indent=4,
+                ensure_ascii=False
+            )
 
 
-        offset = math.sin(
-            self.float_time
-        ) * 1.5
+
+    # =================
+    # image
+    # =================
 
 
-        self.pet.move(
-            x,
-            int(y + offset)
+    def load_image(self):
+
+        path = os.path.join(
+            ASSETS,
+            "pet.png"
+        )
+
+
+        self.original = QPixmap(
+            path
+        )
+
+
+        self.resize_pet()
+
+
+
+    def resize_pet(self):
+
+        img = self.original.scaled(
+            int(
+                self.original.width()
+                *
+                self.scale
+            ),
+            int(
+                self.original.height()
+                *
+                self.scale
+            ),
+            Qt.KeepAspectRatio,
+            Qt.SmoothTransformation
+        )
+
+
+        self.setPixmap(
+            img
+        )
+
+
+        self.resize(
+            img.size()
         )
